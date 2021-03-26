@@ -17,7 +17,7 @@ See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 %}
-function EventsPlotInfo(varargin)
+function EventsPlot(varargin)
 
 global BpodSystem
     
@@ -38,16 +38,16 @@ switch action
 
         
         BpodSystem.GUIHandles.EventsPlot.AlignOnLabel = uicontrol('Style', 'text','String','align on:', 'Position', [30 70 60 20], 'FontWeight', 'normal', 'FontSize', 10,'FontName', 'Arial');
-        BpodSystem.GUIHandles.EventsPlot.AlignOnMenu = uicontrol('Style', 'popupmenu','Value',6, 'String', fields(state_colors), 'Position', [95 70 150 20], 'FontWeight', 'normal', 'FontSize', 10, 'BackgroundColor','white', 'FontName', 'Arial','Callback', {@EventsPlot, 'alignon'});
+        BpodSystem.GUIHandles.EventsPlot.AlignOnMenu = uicontrol('Style', 'popupmenu','Value',7, 'String', fields(state_colors), 'Position', [95 70 150 20], 'FontWeight', 'normal', 'FontSize', 10, 'BackgroundColor','white', 'FontName', 'Arial','Callback', {@EventsPlot, 'alignon'});
         
         BpodSystem.GUIHandles.EventsPlot.LeftEdgeLabel = uicontrol('Style', 'text','String','start', 'Position', [30 35 40 20], 'FontWeight', 'normal', 'FontSize', 10,'FontName', 'Arial');
         BpodSystem.GUIHandles.EventsPlot.LeftEdge = uicontrol('Style', 'edit','String',-2, 'Position', [75 35 40 20], 'FontWeight', 'normal', 'FontSize', 10, 'BackgroundColor','white', 'FontName', 'Arial','Callback', {@EventsPlot, 'time_axis'});
         
         BpodSystem.GUIHandles.EventsPlot.LeftEdgeLabel = uicontrol('Style', 'text','String','end', 'Position', [30 10 40 20], 'FontWeight', 'normal', 'FontSize', 10, 'FontName', 'Arial');
-        BpodSystem.GUIHandles.EventsPlot.RightEdge = uicontrol('Style', 'edit','String',6, 'Position', [75 10 40 20], 'FontWeight', 'normal', 'FontSize', 10, 'BackgroundColor','white', 'FontName', 'Arial','Callback', {@EventsPlot, 'time_axis'});
+        BpodSystem.GUIHandles.EventsPlot.RightEdge = uicontrol('Style', 'edit','String',14, 'Position', [75 10 40 20], 'FontWeight', 'normal', 'FontSize', 10, 'BackgroundColor','white', 'FontName', 'Arial','Callback', {@EventsPlot, 'time_axis'});
          
         BpodSystem.GUIHandles.EventsPlot.LastnLabel = uicontrol('Style', 'text','String','N trials', 'Position', [130 33 50 20], 'FontWeight', 'normal', 'FontSize', 10, 'FontName', 'Arial');
-        BpodSystem.GUIHandles.EventsPlot.Lastn = uicontrol('Style', 'edit','String',10, 'Position', [185 35 40 20], 'FontWeight', 'normal', 'FontSize', 10, 'BackgroundColor','white', 'FontName', 'Arial','Callback', {@EventsPlot, 'time_axis'});
+        BpodSystem.GUIHandles.EventsPlot.Lastn = uicontrol('Style', 'edit','String',5, 'Position', [185 35 40 20], 'FontWeight', 'normal', 'FontSize', 10, 'BackgroundColor','white', 'FontName', 'Arial','Callback', {@EventsPlot, 'time_axis'});
         
         BpodSystem.GUIHandles.EventsPlot.EventsPlotAxis = axes('Position', [0.1 0.38 0.8 0.54],'Color', 0.3*[1 1 1]);
 
@@ -75,19 +75,17 @@ switch action
                 legend = fnames{i}(1:10);
             end
             hold on; t = text(i-0.5, -0.5, legend);
-            set(t, 'Interpreter', 'none', 'HorizontalAlignment', 'right', 'VerticalAlignment', 'middle', 'Rotation', 90);
+            set(t, 'Interpreter', 'none', 'HorizontalAlignment', 'right', 'VerticalAlignment', 'middle', 'Rotation', 45);
             set(gca, 'Visible', 'off');
         end
         ylim([0 1]); xlim([0 length(fnames)]);
         
         
   %% update    
-  case 'update'
-      
+  case 'update'      
     figure(BpodSystem.ProtocolFigures.EventsPlot);axes(BpodSystem.GUIHandles.EventsPlot.EventsPlotAxis)
     current_trial = BpodSystem.Data.nTrials;
     last_n = str2double(get(BpodSystem.GUIHandles.EventsPlot.Lastn,'String'));
-    
 %    fnames = fieldnames(BpodSystem.Data.RawEvents.Trial{1,BpodSystem.Data.nTrials}.States);
         
     for j=1:last_n
@@ -98,13 +96,13 @@ switch action
         if trial_toplot>0
             thisTrialStateNames = get(BpodSystem.GUIHandles.EventsPlot.AlignOnMenu,'String');
             thisStateName = thisTrialStateNames{get(BpodSystem.GUIHandles.EventsPlot.AlignOnMenu, 'Value')};
-            aligning_time = BpodSystem.Data.RawEvents.Trial{trial_toplot}.States.(thisStateName)(1);
-            
+            aligning_time = BpodSystem.Data.RawEvents.Trial{trial_toplot}.States.(thisStateName)(1);            
             for i=1:length(fnames)
-                
+%                 tic
                 t = BpodSystem.Data.RawEvents.Trial{trial_toplot}.States.(fnames{i})-aligning_time;
-                if t(1)==t(2)
-                    x_vertices = [t(1)-0.05 t(2) t(2) t(1)-0.05]';
+%                 toc
+                if t(2)-t(1)<0.0001
+                    x_vertices = [t(1)-0.1 t(2)+0.1 t(2)+0.1 t(1)-0.1]';
                 else
                     x_vertices = [t(1) t(2) t(2) t(1)]';
                 end
@@ -125,8 +123,7 @@ switch action
                 set(BpodSystem.GUIHandles.EventsPlot.StateHandle(last_n-j+1).(fnames{i}),'Vertices', [x_vertices y_vertices],'Visible', 'on');
             end
         end
-    end
-    
+    end    
     set(BpodSystem.GUIHandles.EventsPlot.EventsPlotAxis, 'XLim', [str2double(get(BpodSystem.GUIHandles.EventsPlot.LeftEdge,'String')), str2double(get(BpodSystem.GUIHandles.EventsPlot.RightEdge,'String'))]);
-    set(BpodSystem.GUIHandles.EventsPlot.EventsPlotAxis,'YLim', [0 last_n]);
+    set(BpodSystem.GUIHandles.EventsPlot.EventsPlotAxis,'YLim', [0 last_n]);    
 end

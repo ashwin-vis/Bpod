@@ -1,38 +1,26 @@
 %{
 
-CONFIRM INFOSIDE OK
+FIX figures, put them all w/ GUIData, Handles, Protocol Figures within
+their own fxns? Or put that for spacing w/in protocol??
 
-NP white, don't give reward - outcomes not picking up not present! OK
+Add outcome plot
 
-fix plotting multiple center tries OK?
+FIX MAIN LOOP FLOW!! OK if change warning in trial manager object!!
+Is state machine/main loop functioning correctly w/ current vs next trial type and
+outcome/reward?
 
-variables to put in Bpodsystem.Data = trialtypes, outcomes OK
+double check turning side odor off
 
-To implement:
+BpodSystem.GUIData.ParameterGUI.ParamNames
+BpodSystem.GUIData.ParameterGUI.nParams
+BpodSystem.GUIData.ParameterGUI.LastParamValues
+BpodSystem.GUIHandles.ParameterGUI.Labels
+BpodSystem.GUIHandles.ParameterGUI.Params
+BpodSystem.ProtocolFigures.ParameterGUI
 
-grace period/house lights/timer beeps - house lights for ITI, port lights
-for timing
+S.GUIPanels
+S.GUI = has the parameters
 
-scope sync - OK
-
-training protocols!!
-
-center reward protocol, must stay in port protocol - 4 ports
-
-total liquid/performance - OK
-
-GUI to load and set session parameters BEFORE trial types are chosen (json
-files?) - OK
-
-camera / File save structure!
-
-Problem updating outcome window w small trials - OK
-
-Errors/not present/repeating trial types OK
-
-If timings long/short??
-
-First and other trial rewards not in events plot? OK??
 
 ---------------
 

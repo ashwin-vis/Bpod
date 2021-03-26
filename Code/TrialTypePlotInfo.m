@@ -71,7 +71,7 @@ switch Action
         yticklabelsinfo = {'RandForced','InfoForced','Choice'};
         labelFontSize = 16;
         axes(AxesHandle);
-        MaxTrialType = max(TrialTypeList);
+        MaxTrialType = numel(yticklabelsinfo);
         %plot in specified axes
         Xdata = 1:nTrialsToShow;
         if ~isrow(TrialTypeList)
@@ -83,11 +83,17 @@ switch Action
         BpodSystem.GUIHandles.CurrentTrialCircle = line([0,0],[0,0], 'LineStyle','none','Marker','o','MarkerEdge','k','MarkerFace',[1 1 1], 'MarkerSize',6);
         BpodSystem.GUIHandles.CurrentTrialCross = line([0,0],[0,0], 'LineStyle','none','Marker','+','MarkerEdge','k','MarkerFace',[1 1 1], 'MarkerSize',6);
         BpodSystem.GUIHandles.IncorrectLine = line([0,0],[0,0], 'LineStyle','none','Marker','x','MarkerEdge','r','MarkerFace','r', 'MarkerSize',6);
-        BpodSystem.GUIHandles.InfoCorrectLine = line([0,0],[0,0], 'LineStyle','none','Marker','o','MarkerEdge',[128	0 128]./255,'MarkerFace',[128	0 128]./255, 'MarkerSize',6);
-        BpodSystem.GUIHandles.RandCorrectLine = line([0,0],[0,0], 'LineStyle','none','Marker','o','MarkerEdge',[255 140 0]./255,'MarkerFace',[255 140 0]./255, 'MarkerSize',6);
-        BpodSystem.GUIHandles.NotPresentLine = line([0,0],[0,0], 'LineStyle','none','Marker','o','MarkerEdge','k','MarkerFace',[1 1 1], 'MarkerSize',6);
+        BpodSystem.GUIHandles.InfoCorrectBigLine = line([0,0],[0,0], 'LineStyle','none','Marker','o','MarkerEdge',[128 0 128]./255,'MarkerFace',[128   0 128]./255, 'MarkerSize',6);
+        BpodSystem.GUIHandles.InfoCorrectSmallLine = line([0,0],[0,0], 'LineStyle','none','Marker','o','MarkerEdge',[0.8 0.6 1],'MarkerFace',[0.8 0.6 1], 'MarkerSize',6);
+        BpodSystem.GUIHandles.RandCorrectBigLine = line([0,0],[0,0], 'LineStyle','none','Marker','o','MarkerEdge',[255 140 0]./255,'MarkerFace',[255 140 0]./255, 'MarkerSize',6);
+        BpodSystem.GUIHandles.RandCorrectSmallLine = line([0,0],[0,0], 'LineStyle','none','Marker','o','MarkerEdge',[1.0 0.8 0.4],'MarkerFace',[1.0 0.8 0.4], 'MarkerSize',6);
+        BpodSystem.GUIHandles.NotPresentInfoBigLine = line([0,0],[0,0], 'LineStyle','none','Marker','o','MarkerEdge',[128 0 128]./255,'MarkerFace',[1 1 1], 'MarkerSize',6);
+        BpodSystem.GUIHandles.NotPresentInfoSmallLine = line([0,0],[0,0], 'LineStyle','none','Marker','o','MarkerEdge',[0.8 0.6 1],'MarkerFace',[1 1 1], 'MarkerSize',6);
+        BpodSystem.GUIHandles.NotPresentRandBigLine = line([0,0],[0,0], 'LineStyle','none','Marker','o','MarkerEdge',[255 140 0]./255,'MarkerFace',[1 1 1], 'MarkerSize',6);
+        BpodSystem.GUIHandles.NotPresentRandSmallLine = line([0,0],[0,0], 'LineStyle','none','Marker','o','MarkerEdge',[1.0 0.8 0.4],'MarkerFace',[1 1 1], 'MarkerSize',6);
         BpodSystem.GUIHandles.NoChoiceLine = line([0,0],[0,0], 'LineStyle','none','Marker','x','MarkerEdge','b','MarkerFace','b', 'MarkerSize',6);
-        BpodSystem.GUIHandles.TTOP_Ylabel = strsplit(num2str(MaxTrialType:-1:-1));        
+%         BpodSystem.GUIHandles.TTOP_Ylabel = strsplit(num2str(MaxTrialType:-1:-1));
+        BpodSystem.GUIHandles.TTOP_Ylabel = split(num2str(MaxTrialType:-1:-1));
         if numel(unique(TrialTypeList)) == 3
             set(AxesHandle,'TickDir', 'out','YLim', [-MaxTrialType-.5, -.5], 'YTick', -MaxTrialType:1:-1, 'YTickLabel', yticklabelsinfo, 'FontSize', 16);
         else
@@ -104,9 +110,13 @@ switch Action
         TrialTypeList = varargin{2};
         if ~isrow(TrialTypeList)
             TrialTypeList = TrialTypeList';
-        end               
-        OutcomeRecord = varargin{3};
-        MaxTrialType = max(TrialTypeList);
+        end
+        if nargin>4
+            OutcomeRecord = varargin{3};
+        else
+            OutcomeRecord = BpodSystem.Data.PlotOutcomes;
+        end
+        MaxTrialType = 3;
         yticklabelsinfo = {'RandForced','InfoForced','Choice'};
         if numel(unique(TrialTypeList)) == 3
             set(AxesHandle,'YLim',[-MaxTrialType-.5, -.5], 'YTick', -MaxTrialType:1:-1,'YTickLabel', yticklabelsinfo);
@@ -123,43 +133,51 @@ switch Action
         
         %plot future trials
         offset = mn-1;
-        FutureTrialsIndx = CurrentTrial:mx;
+        FutureTrialsIndx = CurrentTrial+1:mx;
         Xdata = FutureTrialsIndx; Ydata = TrialTypeList(Xdata);
         DisplayXdata = Xdata-offset;
         set(BpodSystem.GUIHandles.FutureTrialLine, 'xdata', [DisplayXdata,DisplayXdata], 'ydata', [Ydata,Ydata]);
         %Plot current trial
-        displayCurrentTrial = CurrentTrial-offset;
-        set(BpodSystem.GUIHandles.CurrentTrialCircle, 'xdata', [displayCurrentTrial,displayCurrentTrial], 'ydata', [TrialTypeList(CurrentTrial),TrialTypeList(CurrentTrial)]);
-        set(BpodSystem.GUIHandles.CurrentTrialCross, 'xdata', [displayCurrentTrial,displayCurrentTrial], 'ydata', [TrialTypeList(CurrentTrial),TrialTypeList(CurrentTrial)]);
+        displayCurrentTrial = CurrentTrial-offset+1;
+        set(BpodSystem.GUIHandles.CurrentTrialCircle, 'xdata', [displayCurrentTrial,displayCurrentTrial], 'ydata', [TrialTypeList(CurrentTrial+1),TrialTypeList(CurrentTrial+1)]);
+        set(BpodSystem.GUIHandles.CurrentTrialCross, 'xdata', [displayCurrentTrial,displayCurrentTrial], 'ydata', [TrialTypeList(CurrentTrial+1),TrialTypeList(CurrentTrial+1)]);
         
         %Plot past trials
-        if ~isempty(OutcomeRecord)
-            indxToPlot = mn:CurrentTrial-1;
-            %Plot Error, unpunished NOT PRESENT
-            EarlyWithdrawalTrialsIndx =(OutcomeRecord(indxToPlot) == -1);
-            Xdata = indxToPlot(EarlyWithdrawalTrialsIndx); Ydata = TrialTypeList(Xdata);
-            DispData = Xdata-offset;
-            set(BpodSystem.GUIHandles.NotPresentLine, 'xdata', [DispData,DispData], 'ydata', [Ydata,Ydata]);
-            %Plot Error, punished INCORRECT
-            InCorrectTrialsIndx = (OutcomeRecord(indxToPlot) == 3);
-            Xdata = indxToPlot(InCorrectTrialsIndx); Ydata = TrialTypeList(Xdata);
-            DispData = Xdata-offset;
-            set(BpodSystem.GUIHandles.IncorrectLine, 'xdata', [DispData,DispData], 'ydata', [Ydata,Ydata]);
-            %Plot Correct, INFO
-            CorrectTrialsIndx = (OutcomeRecord(indxToPlot) == 1);
-            Xdata = indxToPlot(CorrectTrialsIndx); Ydata = TrialTypeList(Xdata);
-            DispData = Xdata-offset;
-            set(BpodSystem.GUIHandles.InfoCorrectLine, 'xdata', [DispData,DispData], 'ydata', [Ydata,Ydata]);
-            %Plot Correct, NO INFO
-            UnrewardedTrialsIndx = (OutcomeRecord(indxToPlot) == 0);
-            Xdata = indxToPlot(UnrewardedTrialsIndx); Ydata = TrialTypeList(Xdata);
-            DispData = Xdata-offset;
-            set(BpodSystem.GUIHandles.RandCorrectLine, 'xdata', [DispData,DispData], 'ydata', [Ydata,Ydata]);
-            %Plot DidNotChoose
-            DidNotChooseTrialsIndx = (OutcomeRecord(indxToPlot) == 2);
-            Xdata = indxToPlot(DidNotChooseTrialsIndx); Ydata = TrialTypeList(Xdata);
-            DispData = Xdata-offset;
-            set(BpodSystem.GUIHandles.NoChoiceLine, 'xdata', [DispData,DispData], 'ydata', [Ydata,Ydata]);
+        if numel(OutcomeRecord) == CurrentTrial
+            indxToPlot = mn:CurrentTrial;
+%         if ~isempty(OutcomeRecord)
+%             if numel(OutcomeRecord) == CurrentTrial
+%                 indxToPlot = mn:CurrentTrial;
+%             else
+%                 indxToPlot = mn:CurrentTrial-1;
+%             end
+
+           for i = 1:10
+               trialIdx = OutcomeRecord(indxToPlot) == i;
+               Xdatapast{i,1} = indxToPlot(trialIdx); Ydatapast{i,1} = TrialTypeList(Xdatapast{i,1});
+               DispDatapast{i,1} = Xdatapast{i,1}-offset;
+           end
+           
+           % INFO BIG
+           set(BpodSystem.GUIHandles.InfoCorrectBigLine, 'xdata', [DispDatapast{1,1},DispDatapast{1,1}], 'ydata', [Ydatapast{1,1},Ydatapast{1,1}]);
+           % INFO SMALL
+           set(BpodSystem.GUIHandles.InfoCorrectSmallLine, 'xdata', [DispDatapast{2,1},DispDatapast{2,1}], 'ydata', [Ydatapast{2,1},Ydatapast{2,1}]);
+           % RAND BIG
+           set(BpodSystem.GUIHandles.RandCorrectBigLine, 'xdata', [DispDatapast{5,1},DispDatapast{5,1}], 'ydata', [Ydatapast{5,1},Ydatapast{5,1}]);
+           % RAND SMALL
+           set(BpodSystem.GUIHandles.RandCorrectSmallLine, 'xdata', [DispDatapast{6,1},DispDatapast{6,1}], 'ydata', [Ydatapast{6,1},Ydatapast{6,1}]);
+           % INFO BIG NP
+           set(BpodSystem.GUIHandles.NotPresentInfoBigLine, 'xdata', [DispDatapast{3,1},DispDatapast{3,1}], 'ydata', [Ydatapast{3,1},Ydatapast{3,1}]);
+           % INFO SMALL NP
+           set(BpodSystem.GUIHandles.NotPresentInfoSmallLine, 'xdata', [DispDatapast{4,1},DispDatapast{4,1}], 'ydata', [Ydatapast{4,1},Ydatapast{4,1}]);
+           % RAND BIG NP
+           set(BpodSystem.GUIHandles.NotPresentRandBigLine, 'xdata', [DispDatapast{7,1},DispDatapast{7,1}], 'ydata', [Ydatapast{7,1},Ydatapast{7,1}]);
+           % RAND SMALL NP
+           set(BpodSystem.GUIHandles.NotPresentRandSmallLine, 'xdata', [DispDatapast{8,1},DispDatapast{8,1}], 'ydata', [Ydatapast{8,1},Ydatapast{8,1}]);
+           % INCORRECT
+           set(BpodSystem.GUIHandles.IncorrectLine, 'xdata', [DispDatapast{9,1},DispDatapast{9,1}], 'ydata', [Ydatapast{9,1},Ydatapast{9,1}]);
+           % NO CHOICE
+           set(BpodSystem.GUIHandles.NoChoiceLine, 'xdata', [DispDatapast{10,1},DispDatapast{10,1}], 'ydata', [Ydatapast{10,1},Ydatapast{10,1}]);
         end
 end
 

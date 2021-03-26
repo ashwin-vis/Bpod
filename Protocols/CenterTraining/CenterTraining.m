@@ -14,9 +14,9 @@ global BpodSystem
 S = BpodSystem.ProtocolSettings; % Load settings chosen in launch manager into current workspace as a struct called S
 if isempty(fieldnames(S))  % If settings file was an empty struct, populate struct with default settings
     S.GUI.SessionTrials = 1000;
-    S.GUI.RewardDelay = 1;
+    S.GUI.RewardDelay = 0.2;
     S.GUI.RewardAmount = 4; %uL
-    S.GUI.ITI = 0;
+    S.GUI.ITI = 2;
 end
 
 %% Initialize plots
@@ -33,7 +33,7 @@ MaxTrials = S.GUI.SessionTrials;
 for currentTrial = 1:MaxTrials
    S = BpodParameterGUI('sync', S); % Sync parameters with BpodParameterGUI plugin
     
-   R = GetValveTimes(S.GUI.RewardAmount, [1]);
+   R = GetValveTimes(S.GUI.RewardAmount, [2]);
    ValveTime = R(1);
    
    MaxTrials = S.GUI.SessionTrials;
@@ -43,7 +43,7 @@ for currentTrial = 1:MaxTrials
     sma = AddState(sma, 'Name', 'WaitForPoke', ... % This example state does nothing, and ends after 0 seconds
         'Timer', 0,...
         'StateChangeConditions', {'Port2In', 'Delay'},...
-        'OutputActions', {'PWM2',255}); 
+        'OutputActions', {}); 
     sma = AddState(sma, 'Name', 'Delay', ... % This example state does nothing, and ends after 0 seconds
         'Timer', S.GUI.RewardDelay,...
         'StateChangeConditions', {'Port2Out', 'WaitForPoke', 'Tup', 'Reward'},...

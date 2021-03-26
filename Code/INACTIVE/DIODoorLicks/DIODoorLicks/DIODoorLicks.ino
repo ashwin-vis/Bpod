@@ -6,21 +6,29 @@
 // Pin 2 is a multi-electrode lick sensor, pin 20 is a buzzer, pins 3-17 are configured as output channels.
 // A 2-byte serial message from the state machine sets the state of the output lines: [Channel (3-17), State(0 or 1)].
 
-// OLD
-// A 3-byte serial message from the state machine enables or disables input lines: ['E' Channel (2-7), State (0 = disabled, 1 = enabled)]
-
 #include "ArCOM.h" // Import serial communication wrapper
 #include <Wire.h>
 #include "Adafruit_MPR121.h"
+#include <Servo.h>
 
 #ifndef _BV
 #define _BV(bit) (1 << (bit)) 
 #endif
 
+Servo myservo;
+
 byte out = 15;
 int buzzer = 20;
 int irqpin = 2;
+int motorPin = 5;
 
+// DOOR MOTOR
+bool door_open = true;
+int open_angle = 9;
+int close_angle = 63;
+int speed_delay = 10;
+
+// touch sensor
 Adafruit_MPR121 cap = Adafruit_MPR121();
 // Keeps track of the last pins touched
 // so we know when buttons are 'released'
@@ -33,7 +41,7 @@ int ntouchChannels = (sizeof(touchChannels)/sizeof(uint8_t));
 
 // Module setup
 ArCOM Serial1COM(Serial1); // Wrap Serial1 (UART on Arduino M0, Due + Teensy 3.X)
-char moduleName[] = "DIOLicks"; // Name of module for manual override UI and state machine assembler
+char moduleName[] = "DIOInfoseek"; // Name of module for manual override UI and state machine assembler
 //char* eventNames[] = {"2_Hi", "2_Lo", "3_Hi", "3_Lo", "4_Hi", "4_Lo", "5_Hi", "5_Lo", "6_Hi", "6_Lo"};
 char* eventNames[] = {"Lick_Left", "Lick_Right", "Lick_Center"};
 #define FirmwareVersion 1
@@ -79,34 +87,21 @@ void setup()
     pinMode(i, OUTPUT);
   }
 
+  myservo.write(open_angle);
+  myservo.attach(motorPin);
+
   pinMode(irqpin,INPUT);
   digitalWrite(irqpin, HIGH); //enable pullup resistor
   
   if (!cap.begin(0x5A)) {
     while (1);
-  }  
+  }
 }
 
 void loop()
 {
   currentTime = micros();
-
-  // this doesn't work because bytes only go up to 255-->need many bytes to read
-//  if (Serial1COM.available()) {
-//    opCode = Serial1COM.readByte();
-//    if (opCode == 255) {
-//      returnModuleInfo();
-//    } else if (opCode == 'B') {
-//      channel = Serial1COM.readByte(); 
-//      state = Serial1COM.readByte();
-//      tone(buzzer,channel,state);
-//    } else if ((opCode >= OutputOffset) && (opCode < OutputChRangeHigh)) {
-//        state = Serial1COM.readByte(); 
-//        digitalWrite(opCode,state); 
-//    } 
-//  }
-
-    
+  
   if (Serial1COM.available()) {
     opCode = Serial1COM.readByte();
     if (opCode == 255) {
@@ -117,17 +112,16 @@ void loop()
     }else if (opCode == 253){
       tone(buzzer,4500,50);
       state = Serial1COM.readByte();
+    }else if (opCode == 252){
+      speed_delay = Serial1COM.readByte();
+      closeDoor(speed_delay);
+    }else if (opCode == 251){
+      speed_delay = Serial1COM.readByte();
+      openDoor(speed_delay);
     }else if ((opCode >= OutputOffset) && (opCode < OutputChRangeHigh)) {
         state = Serial1COM.readByte(); 
         digitalWrite(opCode,state); 
-    } 
-//    else if (opCode == 'E') {
-//      channel = Serial1COM.readByte(); 
-//      state = Serial1COM.readByte();
-//      if ((channel >= InputOffset) && (channel < InputChRangeHigh)) {
-//        inputsEnabled[channel-InputOffset] = state;
-//      }
-//    }
+    }
   }
 
 
@@ -147,38 +141,6 @@ void loop()
   lasttouched = currtouched;
   }
 
-  
-//  thisEvent = 1;
-//  for (int i = 0; i < nInputChannels; i++) {
-//    if (inputsEnabled[i] == 1) {
-//      inputChState[i] = digitalRead(i+InputOffset);
-//      readThisChannel = false;
-//      if (currentTime > inputChSwitchTime[i]) {
-//        if ((currentTime - inputChSwitchTime[i]) > refractoryPeriod) {
-//          readThisChannel = true;
-//        }
-//      } else if ((currentTime + 4294967296-inputChSwitchTime[i]) > refractoryPeriod) {
-//        readThisChannel = true;
-//      }
-//      if (readThisChannel) {
-//        if ((inputChState[i] == 1) && (lastInputChState[i] == 0)) {
-//          events[nEvents] = thisEvent; nEvents++;
-//          inputChSwitchTime[i] = currentTime;
-//          lastInputChState[i] = inputChState[i];
-//        }
-//        if ((inputChState[i] == 0) && (lastInputChState[i] == 1)) {
-//          events[nEvents] = thisEvent+1; nEvents++;
-//          inputChSwitchTime[i] = currentTime;
-//          lastInputChState[i] = inputChState[i];
-//        }
-//      }
-//    }
-//    thisEvent += 2;
-//  }
-//  if (nEvents > 0) {
-//    Serial1COM.writeByteArray(events, nEvents);
-//    nEvents = 0;
-//  }
 }
 
 void returnModuleInfo() {
@@ -203,4 +165,22 @@ void returnModuleInfo() {
 
 boolean checkInterrupt(void){
   return digitalRead(irqpin);
+}
+
+void openDoor(int speed_delay){
+  myservo.attach(motorPin);
+  for (int i = close_angle; i >= open_angle; i--) { 
+    myservo.write(i);  
+    delay(speed_delay);                 
+  }
+  myservo.detach();
+}
+
+void closeDoor(int speed_delay){
+  myservo.attach(motorPin);
+  for (int i = open_angle; i <= close_angle; i++) { 
+    myservo.write(i);  
+    delay(speed_delay);                   
+  }
+  myservo.detach();
 }
